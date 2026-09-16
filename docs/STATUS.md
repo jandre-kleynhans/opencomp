@@ -6,10 +6,10 @@
 
 ## Current phase
 
-**Phase 1 — Compositing core** — ✅ COMPLETE
+**Phase 2 — Keyframe engine + Python expressions** — 🚧 IN PROGRESS (plan drafted)
 
-TOML project in → RGBA8 frame out. Tests verified by eye and by pixel math.
-27 tests, all passing. Demo renders correctly.
+Phase 1 complete: TOML project in → RGBA8 frame out. 27 tests green.
+Phase 2 plan: `docs/PLAN_PHASE2.md` (10 tasks, TDD, tasks 1–3 ready to start).
 
 ## Progress
 
@@ -31,13 +31,13 @@ TOML project in → RGBA8 frame out. Tests verified by eye and by pixel math.
 
 ## Next 3 actions
 
-1. **Phase 2** — keyframe engine: time-value pairs per property, easing curves, Python expression evaluator
-2. **ADR-0002** — document the full-canvas layer centering convention (position ignored; center at canvas center)
-3. **Setup GitHub Issues** as the task tracker once Phase 2 plan is drafted (repo-as-memory → issues-as-work)
+1. **Phase 2 Task 1** — keyframe + expression model in `project.rs` (test-first: parse `[[layer.keyframe]]`, `AnimProp`, `Easing`, `KeyTime`, `AnimValue` int-or-float)
+2. **Phase 2 Task 2** — timecode `"MM:SS:FF"` → frame conversion (`src/keyframe.rs`)
+3. **Phase 2 Task 3** — easing curves (linear / ease_in / ease_out / ease_in_out / step), then Task 4 interpolation → `compositor.rs` time-awareness
 
 ## Blocked
 
-- Nothing.
+- **GitHub Issues (Phase 2 Task 10)** — `gh` CLI not installed, no API token on this box. SSH push works (`github-opencomp` alias) but Issues needs API creds. Options: install `gh` + device-flow login (needs user at browser), or user provides PAT. Until then the plan doc is the tracker.
 
 ---
 *Task 11 (GitHub public) ✅ done 2026-09-16: key `mothership-opencomp`, alias `github-opencomp`, remote `git@github-opencomp:jandre-kleynhans/opencomp.git`.*
