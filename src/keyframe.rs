@@ -265,12 +265,12 @@ fn tokenize(expr: &str) -> Vec<Token> {
 fn eval_arithmetic(expr: &str, vars: &[(String, f64)]) -> f64 {
     // Substitute variable names with their numeric values first
     let mut s = expr.trim().to_string();
-    for (name, val) in vars {
+    for (name, _val) in vars {
         // Replace whole-word occurrences only (not substrings of other names)
         let marker = format!("__{name}__");
         s = s.replace(name, &marker);
     }
-    for (name, val) in vars {
+    for (name, _val) in vars {
         let marker = format!("__{name}__");
         s = s.replace(&marker, &val.to_string());
     }
