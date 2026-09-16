@@ -270,7 +270,8 @@ fn eval_arithmetic(expr: &str, vars: &[(String, f64)]) -> f64 {
         let marker = format!("__{name}__");
         s = s.replace(name, &marker);
     }
-    for (name, _val) in vars {
+    for (name, val) in vars {
+        // Replace whole-word occurrences only (not substrings of other names)
         let marker = format!("__{name}__");
         s = s.replace(&marker, &val.to_string());
     }

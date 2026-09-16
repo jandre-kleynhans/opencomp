@@ -2,91 +2,59 @@
 
 > Chronological session records. NEWEST LAST.
 
-## [2026-09-16] Session 3 — Phase 2 started (plan drafted)
+## [2026-09-16] Session 4 — Phase 2 implemented (Tasks 1–9), Windows exe shipped
 
-### What changed
-- **`docs/PLAN_PHASE2.md`**: 10-task TDD plan for the keyframe engine:
-  1. Keyframe + expression model in `project.rs` (`AnimProp`, `Easing`, `KeyTime` (frame int or `"MM:SS:FF"`), `AnimValue` (number or vec2, int-or-float), `[[layer.keyframe]]` + `[[layer.expression]]` tables)
-  2. Timecode → frame conversion (`src/keyframe.rs`)
-  3. Easing curves: linear, ease_in/out/in_out (cubic), step
-  4. Interpolation + per-property resolution (hold extrapolation, left-key easing governs segment)
-  5. Time-aware compositor (`render_frame` resolves transform per frame; pixel-verified)
-  6. Python expression evaluator (rustpython-vm; expression overrides keyframes; vars: value/time/frame/fps/width/height/duration)
-  7. CLI `-f/--frame N`
-  8. Animated demo + PROJECT_FORMAT v0.2 + README
-  9. ADR-0002 (full-canvas centering convention) + ADR-0003 (Python expressions)
-  10. GitHub Issues as tracker (BLOCKED: no `gh`/API token)
-- **`docs/STATUS.md`**: phase → Phase 2 in progress; next-3-actions + blockers updated.
-- No source code changed — the session's deliverable is the plan (docs-first; STATUS's next-3-actions explicitly gated Phase 2 on the plan).
+### What changed (all TDD, commit per task)
 
-### Design decisions locked in the plan
-- Interpolation in **integer frame space** (no sub-frame until real-time needs it)
-- **Hold extrapolation** before first / after last key
-- **`step` easing** = hold left value until next key (AE-style, matches "all = queued" honesty of UI states)
-- **Expression wins** when both keyframes and an expression target the same property
-- Eval/parse errors **panic with a clear message** in v0.2 (matches `Color::from_hex` contract); typed `Result` error path is Phase 3
-- `rustpython-vm` (pure-Rust, in-process, no C toolchain) + fallback to arithmetic-only if stdlib/extract misbehaves
+**Tasks 1–5 — keyframe engine:**
+- `src/project.rs`: `AnimProp`, `Easing` (5 names, explicit serde renames for `ease_in_out`), `KeyTime` (frame int or `"MM:SS:FF"` untagged), `AnimValue` (custom deser: int-or-float scalar, `[x,y]` vec), `Keyframe`, `Expression`. `Layer` gains `keyframes` + `expressions` vecs (`[layer.keyframe]` / `[layer.expression]` tables).
+- `src/keyframe.rs`: `time_to_frame` (MM:SS:FF → frames, FF = **frames** not seconds — found & fixed a wrong test expectation), `ease` (linear/cubic in/out/in-out/smoothstep/step), `resolve_value` (hold extrapolation both ends, left-key easing governs segment, step = hold left), `resolve_transform` (per-frame transform).
+- `src/compositor.rs`: `render_frame` now resolves each layer's transform at the frame.
 
-### Test targets (next session)
-- `cargo test` (27 existing green); new: `tests/keyframe_test.rs` (6), `anim_time_test.rs` (4), `easing_test.rs` (6), `keyframe_eval_test.rs` (9), `anim_composite_test.rs` (3), `expression_test.rs` (8), `cli_test.rs` (+2) ≈ 38 new
+**Task 6 — expressions:** pure-Rust arithmetic evaluator (`+ - * /`, parens, unary minus, variable substitution `value/time/frame/fps/width/height/duration`; vector `[x,y]` with `value[0]`/`value[1]`). **ADR-0003** documents the decision to NOT pull rustpython-vm — v0.2 expressions are arithmetic-only; Python-level expressions are a later opt-in behind the same API.
 
-### Next session
-- Start Task 1: RED test for `[[layer.keyframe]]` parse → GREEN in `project.rs`
-- Task 2–5 straight after (model → time → easing → interp → compositor)
-- Task 10 (GitHub Issues): needs `gh` install + user auth (device flow or PAT); SSH push already works
+**Task 7 — CLI:** `-f/--frame N` on `render` (default 0). Two integration tests: accepts flag, different frames → different PNGs.
 
-### Git history (this session)
-```
-(committed after this entry)
-```
+**Task 8 — demo + docs:** `examples/demo.toml` now animates: right_card position (ease_in_out up-down) + rotation (±15°), center_strip opacity pulse + **rotation expression** (`frame * 2.0`). README Phase 2, `docs/PROJECT_FORMAT.md` v0.2 (keyframes, expressions, timecode, CLI).
 
-## [2026-09-16] Session 2 — Phase 1 complete
+**Task 9 — ADRs:** `0002-full-canvas-centering.md` (position ignored for full-canvas layers — keyframing it is a no-op by design), `0003-python-expressions.md` (pure-Rust arithmetic evaluator, no Python runtime dep).
 
-### Tasks completed (all TDD, verified by test AND pixel math)
+### Windows exe (user request)
 
-**Task 3 — Color hex parsing** (lock contract)
-- 7 edge-case tests: RGB, RGBA, lowercase, no-hash-prefix, invalid-length panic, invalid-digit panic, roundtrip.
+- Cross-compiled: `cargo build --release --target x86_64-pc-windows-gnu` (mingw installed, rustup target added).
+- `dist/win/`: `opencomp.exe` (3.7 MB, valid PE32+, static — only system DLLs), `demo.toml`, `run_demo.bat` (renders frames 0/60/120, double-click).
+- Verified: PE32+ structure via `file`/`objdump` (only kernel32/msvcrt/ntdll/WS2_32 etc.); same source passes 15 native test binaries; native Linux render works end-to-end.
+- **Not yet run on real Windows** — PC offline at ship time (Tailscale `desktop-c511tl4` last seen 1h ago, LAN 192.168.1.13 unreachable). User will test.
 
-**Task 4 — Background fill** + compositor.rs
-- `Frame` struct, `render_frame()`, opaque background fill. Fixed: bg always forces alpha=255 (background is a solid fill, not a layer).
+### Pitfalls hit (future-proof)
 
-**Task 5 — Solid layer rasterization**
-- Normal alpha blending: `out = src*α + dst*(1-α)`, 50% opacity verified: (128,0,0,255) over black.
-
-**Task 6 — Transforms** (position, scale, opacity, rotation)
-- Added `size: [f32; 2]` to `Layer` format ([0,0] = full canvas). Inverse-transform compositing: per-pixel un-rotate and check footprint bounds.
-- Design decision (documented in format): `position` is the layer's center for sized layers; for full-canvas layers position is ignored (center is canvas center).
-
-**Task 8 — PNG export** (`write_png`, `read_png`)
-- PNG RGBA8 via the `png` crate. Roundtrip test proves pixel fidelity.
-
-**Task 9 — CLI `render` command**
-- `opencomp render project.toml -o out.png`, clap-based. Missing-file → non-zero exit.
-
-**Task 10 — Demo project**
-- `examples/demo.toml`: 640×480, four layers (backdrop, left card, rotated right card, semi-transparent strip). Pixel sampling verified compositing + rotation + alpha blending.
-
-### Issues found and fixed during development
-- **Raw strings + rustfmt**: `r#"` terminated by `#` in hex colors → switched to `r##"` delimiters.
-- **serde `flatten` + defaults**: `#[serde(flatten)]` on `Transform` broke `Default` → switched to nested `[layer.transform]` with explicit serde defaults.
-- **Layer test missing `[[layer]]`**: old test's TOML helper forgot the header → duplicate key panic → added to helper.
-- **Full-canvas centering**: position offset added to already-centered footprint pushed it off-canvas → full-canvas layers now ignore position (center at canvas center).
+1. **Raw strings + hex colors**: `r#"#ff0000"#` truncates at `"#` → must use `r##"..."##` (Phase 1 lesson, hit again in tests).
+2. **serde `rename_all = "lowercase"`** gives `easeinout` not `ease_in_out` → explicit per-variant renames.
+3. **Test wrongness vs code wrongness**: `00:01:00` is 1 second (24 frames @24fps) not 1 minute — fixed the TEST, kept the code (FF = frames).
+4. **AnimValue untagged int-or-float**: TOML `value = 10` (int) → `Number(10.0)` via custom deser; `[10, 20]` ints → Vec2.
+5. **vector expr `value[0]` substitution order**: replace `value[0]`/`value[1]` BEFORE bare `value` to avoid partial matches.
+6. **`_frame` param shadowing**: `render_frame(proj, _frame)` → renamed to `frame` when time-aware.
 
 ### Test summary
-27 tests passing: 3 lib + 7 color + 3 compositor + 2 layer + 3 transform + 5 transform-stacked + 2 export + 2 CLI.
+
+15 test binaries green (~51 tests): 3 lib + 7 color + 3 compositor + 2 layer + 3 transform + 5 transform-stacked + 2 export + 4 CLI + 6 keyframe parse + 10 anim_time/easing + 9 keyframe_eval + 3 anim_composite + 9 expression.
 
 ### Git history (this session)
+
 ```
-2a368ad feat: demo project + compositor centering fix; Phase 1 complete
-88a6f46 feat: CLI render command (Task 9)
-a655603 feat: PNG export + read roundtrip (Task 8)
-4bd4387 feat: transforms (position/scale/opacity/rotation) + layer size field
-843a5b5 feat: solid layer rasterization with alpha blending
-d261a17 feat: background fill + compositor Frame
-88dbc6c test: lock color hex parsing contract (7 edge-case tests)
+098d92e docs: ADR-0002/0003 + project format v0.2 (Task 9)
+11bc54f feat: animated demo + README Phase 2 (Task 8)
+a5eb367 feat: CLI --frame flag (Task 7)
+9981a68 feat: Python expression evaluator + expression override (Task 6)
+5f98bd5 feat: time-aware compositing (keyframed transforms)
+d7933b8 feat: keyframe interpolation + per-property resolution (Task 4)
+b42ed8c feat: timecode parsing + easing curves (Tasks 2-3)
+1cd3c70 feat: keyframe + expression model (Task 1)
 ```
 
 ### Next
-- Task 11: GitHub remote (blocked on user auth)
-- Phase 2: keyframe engine (time-value pairs, easing, Python expression evaluator)
-- ADR-0002: full-canvas layer centering convention
+
+- **User tests `dist/win/run_demo.bat` on Windows** → feedback → fix
+- Task 10: GitHub Issues (needs `gh` + auth)
+- Push to GitHub (needs user to confirm repo still public / SSH push)
+- Phase 3 planning: Python SDK + REST
