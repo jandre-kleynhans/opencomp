@@ -21,7 +21,7 @@ TOML project in → RGBA8 frame out. Tests verified by eye and by pixel math.
 - [x] PNG export (Task 8) — 2026-09-16
 - [x] CLI `render` (Task 9) — 2026-09-16
 - [x] Demo project + README (Task 10) — 2026-09-16
-- [ ] GitHub public (Task 11) ⏸ blocked: awaiting user GitHub auth
+- [x] GitHub public (Task 11) ✅ — https://github.com/jandre-kleynhans/opencomp — 2026-09-16
 
 ## Known issues
 
@@ -29,10 +29,13 @@ TOML project in → RGBA8 frame out. Tests verified by eye and by pixel math.
 
 ## Next 3 actions
 
-1. **GitHub remote** — push to public repo once user authorizes (token or SSH key)
-2. **Phase 2** — keyframe engine: time-value pairs per property, easing curves, Python expression evaluator
-3. **ADR-0002** — document the full-canvas layer centering convention (position ignored; center at canvas center)
+1. **Phase 2** — keyframe engine: time-value pairs per property, easing curves, Python expression evaluator
+2. **ADR-0002** — document the full-canvas layer centering convention (position ignored; center at canvas center)
+3. **Setup GitHub Issues** as the task tracker once Phase 2 plan is drafted (repo-as-memory → issues-as-work)
 
 ## Blocked
 
-- **GitHub remote** — user to provide token/SSH key (local git is source of truth until then)
+- Nothing.
+
+---
+*Task 11 (GitHub public) ✅ done 2026-09-16: key `mothership-opencomp`, alias `github-opencomp`, remote `git@github-opencomp:jandre-kleynhans/opencomp.git`.*

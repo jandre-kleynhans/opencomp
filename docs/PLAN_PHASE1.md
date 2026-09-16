@@ -319,9 +319,13 @@ pub fn render_frame(proj: &Project, _frame: u32) -> Frame {
 
 ---
 
-### Task 11: GitHub public repo ⏸ BLOCKED — awaiting user GitHub authorization
+### Task 11: GitHub public repo ✅ DONE — 2026-09-16
 
-> **Note (2026-09-16):** User is away from the machine. Repo is fully version-controlled **locally** (git, main branch). Remote push deferred until the user can authorize (token or SSH key). See `github-auth` + `github-repo-management` skills.
+- SSH key `~/.ssh/id_ed25519_github` added to GitHub (user `jandre-kleynhans`, auth key `mothership-opencomp`)
+- `~/.ssh/config` alias: `github-opencomp` → github.com / key
+- Remote: `git@github-opencomp:jandre-kleynhans/opencomp.git`
+- Pushed `main`; repo **public**: https://github.com/jandre-kleynhans/opencomp
+- Verified: `git ls-remote` + GitHub API `private: false`
 
 **Prereq:** user provides GitHub token or creates repo. See `github-auth` + `github-repo-management` skills.
 

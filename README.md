@@ -66,7 +66,8 @@ cargo build --release
 
 ## Remote / GitHub
 
-Repo is **local git only** for now (branch `main`, fully version-controlled). GitHub remote is **pending** — will be pushed once authorized (`docs/PLAN_PHASE1.md` Task 11).
+- **Public repo**: https://github.com/jandre-kleynhans/opencomp
+- Remote: `git@github-opencomp:jandre-kleynhans/opencomp.git` (SSH alias in `~/.ssh/config`)
 
 ## License
 
