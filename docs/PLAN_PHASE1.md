@@ -319,7 +319,9 @@ pub fn render_frame(proj: &Project, _frame: u32) -> Frame {
 
 ---
 
-### Task 11: GitHub public repo
+### Task 11: GitHub public repo ⏸ BLOCKED — awaiting user GitHub authorization
+
+> **Note (2026-09-16):** User is away from the machine. Repo is fully version-controlled **locally** (git, main branch). Remote push deferred until the user can authorize (token or SSH key). See `github-auth` + `github-repo-management` skills.
 
 **Prereq:** user provides GitHub token or creates repo. See `github-auth` + `github-repo-management` skills.
 

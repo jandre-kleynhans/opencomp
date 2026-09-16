@@ -64,6 +64,10 @@ cargo build --release
 | 5 | Web UI (optional, headless-first) | pending |
 | 6 | Media I/O: video decode/encode via ffmpeg, audio sync | pending |
 
+## Remote / GitHub
+
+Repo is **local git only** for now (branch `main`, fully version-controlled). GitHub remote is **pending** — will be pushed once authorized (`docs/PLAN_PHASE1.md` Task 11).
+
 ## License
 
-MIT (to be added once the repo goes public).
+MIT
