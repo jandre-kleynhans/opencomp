@@ -7,7 +7,7 @@
 // See docs/ADRs/0004-wasm-effects.md.
 use std::sync::Arc;
 
-use wasmtime::{Engine, Instance, Linker, Memory, Module, Store};
+use wasmtime::{Engine, Linker, Memory, Module, Store};
 
 pub struct Effect {
     pub name: String,

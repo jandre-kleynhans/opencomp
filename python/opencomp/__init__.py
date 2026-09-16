@@ -114,6 +114,8 @@ class Layer:
     keyframes: List[Keyframe] = field(default_factory=list)
     expressions: List[Expression] = field(default_factory=list)
     blend: str = "normal"
+    # for video/image layers
+    source: Optional[str] = None
 
     def __post_init__(self):
         if isinstance(self.color, str):
@@ -168,6 +170,8 @@ class Project:
                 lines.append(f'color = "{layer.color.to_hex()}"')
             if layer.size != [0.0, 0.0]:
                 lines.append(f"size = [{layer.size[0]:g}, {layer.size[1]:g}]")
+            if layer.source:
+                lines.append(f'source = "{layer.source}"')
             if layer.transform != Transform():
                 lines.append("")
                 lines.append("[layer.transform]")
@@ -216,6 +220,7 @@ class Project:
                 color=Color.from_hex(raw["color"]) if raw.get("color") else None,
                 size=[float(x) for x in raw.get("size", [0.0, 0.0])],
                 blend=raw.get("blend", "normal"),
+                source=raw.get("source"),
             )
             if "transform" in raw:
                 t = raw["transform"]

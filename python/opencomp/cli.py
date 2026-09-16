@@ -30,6 +30,15 @@ def _render_to(proj: Project, frame: int, out: Path) -> None:
 
 def cmd_render(args) -> int:
     proj = Project.load(args.project)
+    if args.all:
+        # delegate full render+encode to the Rust binary (ffmpeg)
+        bin_path = _find_binary()
+        subprocess.run(
+            [str(bin_path), "render", str(args.project), "--all", "-o", str(args.output)],
+            check=True,
+        )
+        print(f"rendered all frames -> {args.output}")
+        return 0
     if args.frame is not None:
         _render_to(proj, args.frame, args.output)
         print(f"rendered frame {args.frame} -> {args.output}")
@@ -194,10 +203,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="opencomp", description="OpenComp Python CLI (Phase 3)")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    r = sub.add_parser("render", help="render a project (one frame or all)")
+    r = sub.add_parser("render", help="render a project (one frame, all frames, or mp4)")
     r.add_argument("project")
     r.add_argument("-f", "--frame", type=int, default=None, help="frame number (default: all frames)")
     r.add_argument("-o", "--output", default="out.png")
+    r.add_argument("--all", action="store_true", help="render all frames and encode to mp4 via ffmpeg")
     r.set_defaults(func=cmd_render)
 
     f = sub.add_parser("frame", help="render a specific frame")

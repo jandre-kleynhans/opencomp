@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenComp UI — Phase 5</title>
+<style>
+  :root { --bg:#14161a; --panel:#1c1f26; --stroke:#2c3140; --text:#e6e8ee; --accent:#4f8cff; --key:#ffcc4d; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; height:100vh; }
+  header { display:flex; align-items:center; gap:12px; padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--stroke); }
+  header h1 { font-size:15px; margin:0; font-weight:600; }
+  header .spacer { flex:1; }
+  button { background:var(--accent); color:#fff; border:0; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+  button.secondary { background:#333a46; }
+  button:hover { filter:brightness(1.1); }
+  button.danger { background:#c0392b; }
+  input[type=text], input[type=number], select { background:#14161a; color:var(--text); border:1px solid var(--stroke); border-radius:4px; padding:4px 8px; font-size:13px; }
+  main { display:flex; flex:1; min-height:0; }
+  #layers { width:220px; background:var(--panel); border-right:1px solid var(--stroke); padding:10px; overflow-y:auto; }
+  #layers h2 { font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:#8a93a6; margin:0 0 8px; }
+  .layer-item { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; cursor:pointer; }
+  .layer-item:hover { background:#232833; }
+  .layer-item.active { background:var(--accent); color:#fff; }
+  .layer-item .swatch { width:14px; height:14px; border-radius:3px; border:1px solid #00000055; }
+  .layer-item .name { flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; }
+  .layer-item .del { background:none; border:0; color:#8a93a6; cursor:pointer; padding:0 4px; font-size:14px; }
+  #viewport-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px; overflow:hidden; background:#0e1013; }
+  #canvas { max-width:100%; max-height:calc(100vh - 240px); box-shadow:0 4px 20px #00000088; image-rendering:pixelated; background:#000; }
+  #status { font-size:12px; color:#8a93a6; margin-top:8px; }
+  #timeline { height:170px; background:var(--panel); border-top:1px solid var(--stroke); position:relative; padding:10px 14px 14px; }
+  #timeline .tl-top { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  #timeline .tl-top label { font-size:11px; color:#8a93a6; text-transform:uppercase; }
+  #playhead-row { position:relative; height:24px; margin-bottom:6px; }
+  #ruler { position:absolute; left:0; right:0; height:24px; background:#161a20; border-radius:4px; overflow:hidden; }
+  .tick { position:absolute; bottom:0; width:1px; height:12px; background:#3a4150; }
+  .tick.label { height:24px; }
+  .tick span { font-size:9px; color:#6b7385; position:absolute; left:2px; top:6px; }
+  #playhead { position:absolute; top:0; bottom:0; width:2px; background:#ff5566; z-index:5; }
+  #playhead::after { content:'▼'; color:#ff5566; font-size:10px; position:absolute; top:-2px; left:-4px; }
+  .lane { position:relative; height:30px; border-bottom:1px solid #22262e; display:flex; align-items:center; }
+  .lane .lname { width:150px; font-size:11px; color:#8a93a6; padding-left:4px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .lane .track { position:absolute; left:160px; right:0; top:0; bottom:0; cursor:pointer; }
+  .kf-dot { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; background:var(--key); border-radius:50%; border:1px solid #000; cursor:pointer; z-index:3; }
+  .kf-dot:hover { transform:translate(-50%,-50%) scale(1.4); }
+  .kf-dot.selected { outline:2px solid #fff; }
+  #kf-edit { display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12px; }
+  #kf-edit input[type=number] { width:70px; }
+  .fps-note { font-size:11px; color:#6b7385; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⬢ OpenComp — Phase 5 UI</h1>
+  <div class="spacer"></div>
+  <label class="fps-note">Server</label>
+  <input type="text" id="server" value="http://127.0.0.1:8350" style="width:170px">
+  <button id="conn-btn" class="secondary">Connect</button>
+  <span id="conn-state" style="font-size:11px;color:#8a93a6">—</span>
+  <button id="add-layer" class="secondary">+ Layer</button>
+  <button id="save">Save TOML</button>
+</header>
+<main>
+  <div id="layers">
+    <h2>Layers</h2>
+    <div id="layer-list"></div>
+  </div>
+  <div id="viewport-wrap">
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="status">frame 0 / 120</div>
+  </div>
+</main>
+<div id="timeline">
+  <div class="tl-top">
+    <label>Frame:</label>
+    <input type="number" id="cur-frame" value="0" min="0" style="width:70px">
+    <button id="play" class="secondary">▶ Play</button>
+    <label style="margin-left:12px">Duration:</label>
+    <input type="number" id="duration" value="120" min="1" style="width:70px">
+    <div class="fps-note" style="margin-left:auto">keyframe ➜ click a lane · drag playhead</div>
+  </div>
+  <div id="playhead-row">
+    <div id="ruler"></div>
+    <div id="playhead"></div>
+  </div>
+  <div id="lanes"></div>
+  <div id="kf-edit" style="display:none">
+    <label>Selected keyframe:</label>
+    <span id="kf-info"></span>
+    <input type="number" id="kf-time" style="width:70px">
+    <input type="text" id="kf-val" style="width:120px" placeholder="value (e.g. [100,200] or 50)">
+    <select id="kf-easing">
+      <option>linear</option><option>ease_in</option><option>ease_out</option><option>ease_in_out</option><option>step</option>
+    </select>
+    <button id="kf-update" class="secondary">Update</button>
+    <button id="kf-del" class="danger">Delete</button>
+  </div>
+</div>
+<script>
+"use strict";
+// ---- state ---------------------------------------------------------------
+let SERVER = "http://127.0.0.1:8350";
+let project = {
+  name: "ui", fps: 24, width: 640, height: 480, duration: 120,
+  bg_color: "#0a0a0a", layers: []
+};
+let currentLayer = 0;
+let currentFrame = 0;
+let playing = false;
+let selectedKf = null; // {layer, prop, idx}
+let props = ["position", "scale", "opacity", "rotation"];
+
+// ---- DOM refs -------------------------------------------------------------
+const $ = id => document.getElementById(id);
+const canvas = $("canvas"), ctx = canvas.getContext("2d");
+
+// ---- helpers --------------------------------------------------------------
+function parseValue(s) {
+  s = s.trim();
+  if (s.startsWith("[")) {
+    const m = s.match(/\[([-\d.]+)\s*,\s*([-\d.]+)\]/);
+    if (!m) return null;
+    return [parseFloat(m[1]), parseFloat(m[2])];
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+function fmtValue(v) { return Array.isArray(v) ? `[${v[0]},${v[1]}]` : String(v); }
+
+// ---- server ---------------------------------------------------------------
+async function api(path, method="GET", body=null) {
+  const opts = { method, headers: {} };
+  if (body) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  const r = await fetch(SERVER + path, opts);
+  if (!r.ok) throw new Error(path + " → HTTP " + r.status);
+  const ct = r.headers.get("content-type") || "";
+  return ct.includes("json") ? r.json() : r.blob();
+}
+
+async function connect() {
+  $("conn-state").textContent = "connecting…";
+  try {
+    const h = await api("/health");
+    $("conn-state").textContent = "✓ " + h.status;
+    // load a fresh default project on the server
+    await api("/project/load", "POST", { path: "" }); // server keeps in-memory default
+    // fallback: if no path, we can't load; show demo built-in
+    rebuild();
+  } catch (e) {
+    $("conn-state").textContent = "✗ " + e.message;
+  }
+}
+
+// ---- rendering ------------------------------------------------------------
+async function renderFrame() {
+  const blob = await api(`/render/frame?n=${currentFrame}`);
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); URL.revokeObjectURL(url); };
+  img.src = url;
+  $("status").textContent = `frame ${currentFrame} / ${project.duration}`;
+}
+
+// ---- layers ---------------------------------------------------------------
+function rebuild() {
+  // layer list
+  const list = $("layer-list");
+  list.innerHTML = "";
+  project.layers.forEach((l, i) => {
+    const div = document.createElement("div");
+    div.className = "layer-item" + (i === currentLayer ? " active" : "");
+    const sw = document.createElement("span");
+    sw.className = "swatch";
+    sw.style.background = l.color || "#888";
+    const nm = document.createElement("span");
+    nm.className = "name";
+    nm.textContent = l.name;
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "✕";
+    del.onclick = e => { e.stopPropagation(); project.layers.splice(i,1); if (currentLayer >= project.layers.length) currentLayer = project.layers.length-1; rebuild(); };
+    div.onclick = () => { currentLayer = i; rebuild(); };
+    div.append(sw, nm, del);
+    list.appendChild(div);
+  });
+  updateTimeline();
+  renderFrame();
+}
+
+function addLayer() {
+  const n = project.layers.length + 1;
+  const layer = { name: "layer_" + n, type: "solid", color: "#4f8cff", size: [100,100], transform: { position:[320,240], scale:[1,1], opacity:100, rotation:0 }, keyframes: [], expressions: [] };
+  project.layers.push(layer);
+  currentLayer = project.layers.length - 1;
+  rebuild();
+  // push to server
+  api("/layer/add", "POST", { name: layer.name, type: layer.type, color: layer.color, size: layer.size })
+    .then(() => applyTransformToServer(layer)).catch(e => console.log(e));
+}
+
+async function applyTransformToServer(layer) {
+  // refresh all keyframes on server for this layer
+  for (const kf of layer.keyframes) {
+    await api("/layer/keyframe", "POST", { layer: layer.name, property: kf.property, time: kf.time, value: kf.value, easing: kf.easing });
+  }
+}
+
+// ---- timeline -------------------------------------------------------------
+function updateTimeline() {
+  const lanes = $("lanes");
+  lanes.innerHTML = "";
+  const dur = project.duration;
+  const pxPerF = (document.getElementById("timeline").clientWidth - 190) / dur;
+  // ruler
+  const ruler = $("ruler");
+  ruler.innerHTML = "";
+  for (let f = 0; f <= dur; f += Math.max(1, Math.floor(dur / 12))) {
+    const t = document.createElement("div");
+    t.className = "tick" + (f % 24 === 0 ? " label" : "");
+    t.style.left = (f * pxPerF) + "px";
+    if (f % 24 === 0) { const s = document.createElement("span"); s.textContent = `${Math.floor(f/24)}s`; t.appendChild(s); }
+    ruler.appendChild(t);
+  }
+  // lanes
+  project.layers.forEach((layer, li) => {
+    const lane = document.createElement("div");
+    lane.className = "lane";
+    const nm = document.createElement("div");
+    nm.className = "lname";
+    nm.textContent = layer.name;
+    lane.appendChild(nm);
+    const track = document.createElement("div");
+    track.className = "track";
+    // click to add a keyframe for each property at current frame
+    props.forEach((prop, pi) => {
+      const sub = document.createElement("div");
+      sub.style.cssText = `position:absolute;left:0;right:0;height:${30/props.length}px;top:${pi*30/props.length}px;border-bottom:1px dashed #22262e;`;
+      sub.onclick = e => {
+        e.stopPropagation();
+        const existing = layer.keyframes.filter(k => k.property === prop && k.time === currentFrame);
+        if (existing.length) return; // already a key here
+        // default value from transform
+        const t = layer.transform;
+        const val = prop === "position" ? [t.position[0], t.position[1]]
+                 : prop === "scale" ? [t.scale[0], t.scale[1]]
+                 : prop === "opacity" ? t.opacity : t.rotation;
+        layer.keyframes.push({ property: prop, time: currentFrame, value: val, easing: "linear" });
+        api("/layer/keyframe", "POST", { layer: layer.name, property: prop, time: currentFrame, value: val, easing: "linear" })
+          .then(() => renderFrame()).catch(() => {});
+        updateTimeline();
+      };
+      // draw existing keyframes
+      layer.keyframes.filter(k => k.property === prop).forEach((kf, ki) => {
+        if (kf.time > dur) return;
+        const dot = document.createElement("div");
+        dot.className = "kf-dot";
+        if (selectedKf && selectedKf.layer === li && selectedKf.prop === prop && selectedKf.idx === ki) dot.classList.add("selected");
+        dot.style.left = (kf.time * pxPerF) + "px";
+        dot.title = `${prop} @ ${kf.time} = ${fmtValue(kf.value)} (${kf.easing})`;
+        dot.onclick = e => { e.stopPropagation(); selectedKf = { layer: li, prop, idx: ki }; showKfEdit(); updateTimeline(); };
+        sub.appendChild(dot);
+      });
+      track.appendChild(sub);
+    });
+    lane.appendChild(track);
+    lanes.appendChild(lane);
+  });
+  // playhead
+  const ph = $("playhead");
+  ph.style.left = (currentFrame * pxPerF) + "px";
+}
+
+function showKfEdit() {
+  const box = $("kf-edit");
+  if (!selectedKf) { box.style.display = "none"; return; }
+  box.style.display = "flex";
+  const layer = project.layers[selectedKf.layer];
+  const kf = layer.keyframes.filter(k => k.property === selectedKf.prop)[selectedKf.idx];
+  $("kf-info").textContent = `${layer.name}.${selectedKf.prop}`;
+  $("kf-time").value = kf.time;
+  $("kf-val").value = fmtValue(kf.value);
+  $("kf-easing").value = kf.easing;
+}
+
+$("kf-update").onclick = () => {
+  if (!selectedKf) return;
+  const layer = project.layers[selectedKf.layer];
+  const kfs = layer.keyframes.filter(k => k.property === selectedKf.prop);
+  const kf = kfs[selectedKf.idx];
+  const time = parseInt($("kf-time").value) || 0;
+  const val = parseValue($("kf-val").value);
+  if (val === null) { alert("bad value"); return; }
+  kf.time = time;
+  kf.value = val;
+  kf.easing = $("kf-easing").value;
+  api("/layer/keyframe", "POST", { layer: layer.name, property: kf.property, time: kf.time, value: kf.value, easing: kf.easing })
+    .then(() => renderFrame()).catch(() => {});
+  updateTimeline();
+};
+$("kf-del").onclick = () => {
+  if (!selectedKf) return;
+  const layer = project.layers[selectedKf.layer];
+  const kfs = layer.keyframes.filter(k => k.property === selectedKf.prop);
+  kfs.splice(selectedKf.idx, 1);
+  // rebuild filtered list back
+  layer.keyframes = layer.keyframes.filter(k => !(k.property === selectedKf.prop && layer.keyframes.indexOf(k) === selectedKf.idx));
+  selectedKf = null;
+  updateTimeline();
+};
+
+// ---- playback -------------------------------------------------------------
+$("play").onclick = () => {
+  if (playing) { playing = false; $("play").textContent = "▶ Play"; return; }
+  playing = true;
+  $("play").textContent = "⏸ Pause";
+  const tick = () => {
+    if (!playing) return;
+    currentFrame = (currentFrame + 1) % Math.max(1, project.duration);
+    $("cur-frame").value = currentFrame;
+    updateTimeline();
+    renderFrame();
+    setTimeout(tick, 1000 / project.fps);
+  };
+  tick();
+};
+$("cur-frame").onchange = e => { currentFrame = parseInt(e.target.value) || 0; updateTimeline(); renderFrame(); };
+$("duration").onchange = e => { project.duration = parseInt(e.target.value) || 1; updateTimeline(); };
+
+// ---- wiring ---------------------------------------------------------------
+$("add-layer").onclick = addLayer;
+$("save").onclick = async () => {
+  // serialize project to TOML and save server-side (real behavior: POST to a save endpoint)
+  const toml = genToml(project);
+  const blob = new Blob([toml], {type:"text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "project.toml";
+  a.click();
+};
+$("conn-btn").onclick = () => { SERVER = $("server").value || SERVER; connect(); };
+
+function genToml(p) {
+  let s = `[project]\nname = "${p.name}"\nfps = ${p.fps}\nwidth = ${p.width}\nheight = ${p.height}\nduration = ${p.duration}\nbg_color = "${p.bg_color}"\n\n`;
+  for (const l of p.layers) {
+    s += `[[layer]]\nname = "${l.name}"\ntype = "${l.type}"\ncolor = "${l.color}"\nsize = [${l.size[0]}, ${l.size[1]}]\n\n[layer.transform]\nposition = [${l.transform.position[0]}, ${l.transform.position[1]}]\nscale = [${l.transform.scale[0]}, ${l.transform.scale[1]}]\nopacity = ${l.transform.opacity}\nrotation = ${l.transform.rotation}\n\n`;
+    for (const kf of l.keyframes) {
+      s += `[[layer.keyframe]]\nproperty = "${kf.property}"\ntime = ${kf.time}\nvalue = ${fmtValue(kf.value)}\neasing = "${kf.easing}"\n\n`;
+    }
+  }
+  return s;
+}
+
+// init: demo project (matches examples/demo.toml)
+function initDemo() {
+  project = {
+    name: "demo", fps: 24, width: 640, height: 480, duration: 120, bg_color: "#0a0a0a",
+    layers: [
+      { name: "backdrop", type:"solid", color:"#1a2b3c", size:[600,440], transform:{position:[320,240],scale:[1,1],opacity:100,rotation:0}, keyframes:[], expressions:[] },
+      { name: "left_card", type:"solid", color:"#e63946", size:[160,220], transform:{position:[180,240],scale:[1,1],opacity:100,rotation:0}, keyframes:[], expressions:[] },
+      { name: "right_card", type:"solid", color:"#457b9d", size:[160,220], transform:{position:[460,240],scale:[1,1],opacity:100,rotation:15}, keyframes:[
+        { property:"position", time:0, value:[460,140], easing:"ease_in_out" },
+        { property:"position", time:120, value:[460,340], easing:"ease_in_out" },
+        { property:"rotation", time:0, value:15, easing:"linear" },
+        { property:"rotation", time:120, value:-15, easing:"ease_in_out" },
+      ], expressions:[] },
+      { name:"center_strip", type:"solid", color:"#f4a261", size:[640,168], transform:{position:[320,240],scale:[1,1],opacity:70,rotation:0}, keyframes:[
+        { property:"opacity", time:0, value:40, easing:"linear" },
+        { property:"opacity", time:60, value:90, easing:"ease_in_out" },
+        { property:"opacity", time:120, value:40, easing:"ease_out" },
+      ], expressions:[{ property:"rotation", expr:"frame * 2.0" }] },
+    ]
+  };
+  rebuild();
+}
+initDemo();
+connect();
+</script>
+</body>
+</html>

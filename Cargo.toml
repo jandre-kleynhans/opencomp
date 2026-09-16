@@ -11,3 +11,4 @@ toml = "0.8"
 png = "0.17"
 clap = { version = "4", features = ["derive"] }
 wasmtime = "26"
+tempfile = "3"
