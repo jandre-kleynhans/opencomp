@@ -1,15 +1,17 @@
 @echo off
-REM OpenComp Windows demo runner — renders 3 frames of the animated demo.
-REM Usage: double-click or run from cmd. PNGs land in the same folder.
+REM OpenComp — full plan demo (Phases 1-6)
 cd /d "%~dp0"
-
-echo === OpenComp Windows demo ===
-echo Rendering demo.toml frame 0/60/120...
-
+echo === OpenComp demo — all phases ===
 opencomp.exe render demo.toml -f 0 -o demo_f000.png
 opencomp.exe render demo.toml -f 60 -o demo_f060.png
 opencomp.exe render demo.toml -f 120 -o demo_f120.png
-
 echo.
-echo Done. Open demo_f000.png / demo_f060.png / demo_f120.png to see the animation.
+echo === Render full animation to MP4 (Phase 6) ===
+opencomp.exe render demo.toml --all -o demo.mp4
+echo.
+echo Files produced:
+dir /B *.png *.mp4
+echo.
+echo Done! Open demo_f000.png / demo_f060.png / demo_f120.png (frames)
+echo and demo.mp4 (full 5-second animation).
 pause
