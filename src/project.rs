@@ -158,6 +158,98 @@ pub enum BlendMode {
 }
 
 // ---------------------------------------------------------------------------
+// Animation: keyframes + expressions
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AnimProp {
+    Position,
+    Scale,
+    Opacity,
+    Rotation,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Easing {
+    #[serde(rename = "linear")]
+    Linear,
+    #[serde(rename = "ease_in")]
+    EaseIn,
+    #[serde(rename = "ease_out")]
+    EaseOut,
+    #[serde(rename = "ease_in_out")]
+    EaseInOut,
+    #[serde(rename = "step")]
+    Step,
+}
+
+fn default_easing() -> Easing {
+    Easing::Linear
+}
+
+/// A keyframe time: a frame number or a "MM:SS:FF" timecode (resolved via project fps).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum KeyTime {
+    Frame(u32),
+    Tc(String),
+}
+
+/// A per-keyframe value: a scalar (opacity/rotation) or 2-vector (position/scale).
+/// Custom deserialize accepts TOML int OR float scalars and [x, y] arrays.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+pub enum AnimValue {
+    Number(f32),
+    Vec2([f32; 2]),
+}
+
+fn anim_value_deser<'de, D>(d: D) -> Result<AnimValue, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = toml::Value::deserialize(d)?;
+    match v {
+        toml::Value::Integer(i) => Ok(AnimValue::Number(i as f32)),
+        toml::Value::Float(f) => Ok(AnimValue::Number(f as f32)),
+        toml::Value::Array(a) if a.len() == 2 => {
+            let mut out = [0.0f32; 2];
+            for (i, item) in a.into_iter().enumerate() {
+                out[i] = match item {
+                    toml::Value::Integer(x) => x as f32,
+                    toml::Value::Float(x) => x as f32,
+                    _ => {
+                        return Err(serde::de::Error::custom(
+                            "keyframe value must be a number or [x, y]",
+                        ))
+                    }
+                };
+            }
+            Ok(AnimValue::Vec2(out))
+        }
+        _ => Err(serde::de::Error::custom(
+            "keyframe value must be a number or [x, y]",
+        )),
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Keyframe {
+    pub property: AnimProp,
+    pub time: KeyTime,
+    #[serde(deserialize_with = "anim_value_deser")]
+    pub value: AnimValue,
+    #[serde(default = "default_easing")]
+    pub easing: Easing,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Expression {
+    pub property: AnimProp,
+    pub expr: String,
+}
+
+// ---------------------------------------------------------------------------
 // Layer
 // ---------------------------------------------------------------------------
 
@@ -178,6 +270,10 @@ pub struct Layer {
     pub size: [f32; 2], // [w, h]; [0, 0] = full canvas
     #[serde(default)]
     pub transform: Transform,
+    #[serde(rename = "keyframe", default)]
+    pub keyframes: Vec<Keyframe>,
+    #[serde(rename = "expression", default)]
+    pub expressions: Vec<Expression>,
     #[serde(default = "default_blend")]
     pub blend: BlendMode,
 }
