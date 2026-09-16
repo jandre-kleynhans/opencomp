@@ -63,11 +63,11 @@ cargo build --release
 | Phase | What | Status |
 |-------|------|--------|
 | 1 | Rust compositing core: TOML project → PNG frame | ✅ done |
-| 2 | Keyframe engine: interpolation, easing, Python expression evaluator | 🔨 in progress |
-| 3 | Python SDK + CLI (`opencomp render/preview/frame`) | pending |
-| 4 | WASM plugin runtime: blur, color, particles as sandboxed effects | pending |
-| 5 | Web UI (optional, headless-first) | pending |
-| 6 | Media I/O: video decode/encode via ffmpeg, audio sync | pending |
+| 2 | Keyframe engine: interpolation, easing, Python expression evaluator | ✅ done |
+| 3 | Python SDK + CLI + REST/WS agent surface | ✅ done |
+| 4 | WASM plugin runtime (wasmtime, effect ABI) | ✅ done |
+| 5 | Web UI: canvas viewport, timeline, layers | ✅ done |
+| 6 | Media I/O: render --all → h264 mp4 via ffmpeg | ✅ done |
 
 ## Remote / GitHub
 

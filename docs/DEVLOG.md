@@ -2,6 +2,47 @@
 
 > Chronological session records. NEWEST LAST.
 
+## [2026-09-16] Session 5 — Phases 3–6 complete (full plan done)
+
+### What changed
+
+**Phase 3 — Python SDK + CLI + REST (agent surface):**
+- `python/opencomp/`: typed `Project`/`Layer`/`Keyframe`/`Color`/`AnimProp`/`Easing`, TOML round-trip (tomllib parse, hand-rolled serialize), `engine.py` (shells to Rust binary), `cli.py` (`render|frame|preview|serve`), `server.py` (REST + WS events, zero-dep stdlib)
+- REST endpoints (all from master plan): `POST /project/load`, `GET /composition/layers`, `POST /layer/add`, `POST /layer/keyframe`, `GET /render/frame?n=`, `POST /render/all`, `GET /project/diff`, `WS /events`
+- 21 Python tests green. SDK installable via `pip install -e python/`.
+
+**Phase 4 — WASM plugin runtime:**
+- `src/effect.rs` with wasmtime 26; linear-memory ABI: `alloc(len)->ptr`, `process(ptr,w,h)->ptr`, `free(ptr,len)`
+- WAT invert module doubles as ABI documentation; 3 tests (load, invert RGBA pixel-exact, bad-wasm error)
+- ADR-0004
+
+**Phase 5 — Web UI (headless-first):**
+- `ui/index.html` — single-file vanilla JS app: canvas viewport (renders via `/render/frame?n=`), layer list (add/del), timeline (ruler, playhead, per-property lanes, keyframe diamonds click-to-add/edit/delete), easing picker, play/scrub, duration, Save-as-TOML
+- Talks to the same REST API an agent would. No build step.
+- ADR-0005
+
+**Phase 6 — Media I/O:**
+- Rust CLI: `render <project> --all -o out.mp4` → renders every frame, pipes through ffmpeg (h264, yuv420p)
+- Verified: 120-frame demo → 640×480 h264 mp4, 5.0s
+- Python SDK: `video`/`image` layer kinds + `source` field (parse/serialize)
+- ADR-0006 (ffmpeg subprocess — don't reinvent codecs)
+
+### Blocked items (environmental, not code)
+- **Phase 2 Task 10 (GitHub Issues)**: `gh` installed (2.46.0) but auth is device-flow — needs the user at a browser. No token on box. Will do on user's signal.
+
+### Test counts
+- Rust: 16 test binaries green (~54 tests incl. 3 effect)
+- Python: 26 tests green (SDK 7 + CLI 5 + server 9 + media 5)
+
+### Windows exe
+- Cross-compiled with ALL phases: 21,974,510 bytes (wasmtime added size) — sha256 `8d6720e15b45310f9696d304d2d171771c112649987f4fcd5762feeb8e336afe`
+- `dist/win/` updated. Delivered to matrix `C:\Users\Public\`.
+
+### Next
+- User review of the complete plan (UI on matrix + exe + demo.mp4)
+- GitHub auth when user is at a browser (Task 10)
+- Follow-ups: Rust `serve`, core video/image decode, codec flags, full WASM plugin registry + params
+
 ## [2026-09-16] Session 4 — Phase 2 implemented (Tasks 1–9), Windows exe shipped
 
 ### What changed (all TDD, commit per task)
