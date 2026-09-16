@@ -46,5 +46,8 @@ fn zero_layers_frame_is_pure_background() {
     let proj = project_with_bg("#000000");
     let frame = render_frame(&proj, 0);
     assert_eq!(frame.pixels.len(), 64 * 48 * 4);
-    assert!(frame.pixels.iter().all(|&b| b == 0));
+    // Background is opaque black: RGB 0, alpha 255 (solid fill).
+    for px in frame.pixels.chunks_exact(4) {
+        assert_eq!(px, &[0, 0, 0, 255]);
+    }
 }
