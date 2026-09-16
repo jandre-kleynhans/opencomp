@@ -23,7 +23,7 @@ impl Frame {
 ///
 /// Phase 1: fills the background, then composites layers bottom-up with
 /// position, scale, opacity, and rotation transforms applied.
-pub fn render_frame(proj: &Project, _frame: u32) -> Frame {
+pub fn render_frame(proj: &Project, frame: u32) -> Frame {
     let width = proj.project.width;
     let height = proj.project.height;
     let n = (width * height) as usize;
@@ -36,7 +36,14 @@ pub fn render_frame(proj: &Project, _frame: u32) -> Frame {
 
     for layer in &proj.layers {
         let mut eff = layer.clone();
-        eff.transform = crate::keyframe::resolve_transform(layer, frame, proj.project.fps);
+        eff.transform = crate::keyframe::resolve_transform(
+            layer,
+            frame,
+            proj.project.fps,
+            proj.project.width,
+            proj.project.height,
+            proj.project.duration,
+        );
         composite_layer(&mut pixels, &eff, width, height);
     }
 
