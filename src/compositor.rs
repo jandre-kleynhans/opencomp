@@ -75,14 +75,10 @@ fn composite_layer(pixels: &mut [u8], layer: &Layer, canvas_w: u32, canvas_h: u3
     let cos_t = theta.cos();
     let sin_t = theta.sin();
 
-    // Layer center in canvas space. For full-canvas layers, the footprint
-    // is the whole canvas: center at the canvas center (position is
-    // relative offset from there).
+    // Layer center in canvas space. For full-canvas layers the footprint is
+    // the whole canvas: center at canvas center (position offset irrelevant).
     let (cx, cy) = if lw == canvas_w as f32 && lh == canvas_h as f32 {
-        (
-            canvas_w as f32 * 0.5 + layer.transform.position[0],
-            canvas_h as f32 * 0.5 + layer.transform.position[1],
-        )
+        (canvas_w as f32 * 0.5, canvas_h as f32 * 0.5)
     } else {
         (layer.transform.position[0], layer.transform.position[1])
     };

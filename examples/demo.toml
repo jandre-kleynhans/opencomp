@@ -1,0 +1,49 @@
+# OpenComp demo — layered solids
+# Three solid layers at different positions/scales, one semi-transparent,
+# one rotated. The compositing core's proof of life.
+
+[project]
+name     = "demo"
+fps      = 24
+width    = 640
+height   = 480
+duration = 120
+bg_color = "#0a0a0a"
+
+[[layer]]
+name  = "backdrop"
+type  = "solid"
+color = "#1a2b3c"
+size  = [600.0, 440.0]
+
+[layer.transform]
+position = [320.0, 240.0]
+
+[[layer]]
+name = "left_card"
+type = "solid"
+color = "#e63946"
+size = [160.0, 220.0]
+
+[layer.transform]
+position = [180.0, 240.0]
+
+[[layer]]
+name = "right_card"
+type = "solid"
+color = "#457b9d"
+size = [160.0, 220.0]
+
+[layer.transform]
+position = [460.0, 240.0]
+rotation = 15.0
+
+[[layer]]
+name = "center_strip"
+type = "solid"
+color = "#f4a26180"
+
+[layer.transform]
+position = [320.0, 240.0]
+scale = [1.0, 0.35]
+opacity = 70.0
