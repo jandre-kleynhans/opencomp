@@ -175,6 +175,8 @@ pub struct Layer {
     #[serde(default, deserialize_with = "opt_color_from_hex")]
     pub color: Option<Color>,
     #[serde(default)]
+    pub size: [f32; 2], // [w, h]; [0, 0] = full canvas
+    #[serde(default)]
     pub transform: Transform,
     #[serde(default = "default_blend")]
     pub blend: BlendMode,

@@ -12,6 +12,7 @@ fn project_with_layer(layer_toml: &str) -> Project {
         duration = 10
         bg_color = "#000000"
 
+        [[layer]]
         {layer_toml}
     "##
     );
@@ -23,7 +24,6 @@ fn full_canvas_solid_layer_over_background() {
     // Default transform → layer covers the whole frame.
     let proj = project_with_layer(
         r##"
-        [[layer]]
         name = "red"
         type = "solid"
         color = "#ff0000"
@@ -40,7 +40,6 @@ fn transparent_layer_shows_background_through() {
     // Alpha 128 → 50% blend of red over black bg: (128, 0, 0, 255).
     let proj = project_with_layer(
         r##"
-        [[layer]]
         name = "red"
         type = "solid"
         color = "#ff000080"

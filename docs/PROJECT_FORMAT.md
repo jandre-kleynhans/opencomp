@@ -24,6 +24,7 @@ name    = "backdrop"       # required, unique
 type    = "solid"          # v0.1: "solid" only
 color   = "#1a2b3c"        # required for solid
 blend   = "normal"         # optional, default "normal"; v0.1 supports only "normal"
+size    = [200, 100]        # optional, [w, h] in pixels; default = full canvas ([0,0])
 
 [layer.transform]          # optional; all fields default
 position = [0.0, 0.0]      # px from top-left, center of layer footprint
