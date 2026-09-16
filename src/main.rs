@@ -19,13 +19,21 @@ enum Command {
         /// Output PNG path
         #[arg(short, long, default_value = "frame_0000.png")]
         output: PathBuf,
+
+        /// Frame number to render (0-based)
+        #[arg(short, long, default_value_t = 0)]
+        frame: u32,
     },
 }
 
 fn main() {
     let cli = Cli::parse();
     match cli.cmd {
-        Command::Render { project, output } => {
+        Command::Render {
+            project,
+            output,
+            frame,
+        } => {
             let src = match std::fs::read_to_string(&project) {
                 Ok(s) => s,
                 Err(e) => {
@@ -40,12 +48,13 @@ fn main() {
                     std::process::exit(1);
                 }
             };
-            let frame = compositor::render_frame(&proj, 0);
-            match export::write_png(&frame, &output) {
+            let rendered = compositor::render_frame(&proj, frame);
+            match export::write_png(&rendered, &output) {
                 Ok(()) => println!(
-                    "rendered {}×{} → {}",
-                    frame.width,
-                    frame.height,
+                    "rendered {}×{} frame {} → {}",
+                    rendered.width,
+                    rendered.height,
+                    frame,
                     output.display()
                 ),
                 Err(e) => {
