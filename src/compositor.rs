@@ -35,7 +35,9 @@ pub fn render_frame(proj: &Project, _frame: u32) -> Frame {
     }
 
     for layer in &proj.layers {
-        composite_layer(&mut pixels, layer, width, height);
+        let mut eff = layer.clone();
+        eff.transform = crate::keyframe::resolve_transform(layer, frame, proj.project.fps);
+        composite_layer(&mut pixels, &eff, width, height);
     }
 
     Frame::new(width, height, pixels)
