@@ -1,6 +1,8 @@
 # OpenComp — Status
 
 > Updated at end of every session. This file is the project's short-term memory.
+> Note: `AGENTS.md` (agent bootstrap) is **gitignored** — it stays local-only by request.
+> On a fresh clone, the bootstrap is: read this file + `docs/DEVLOG.md` + `docs/PLAN_PHASE1.md`.
 
 ## Current phase
 
