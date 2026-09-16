@@ -1,0 +1,12 @@
+[package]
+name = "opencomp"
+version = "0.1.0"
+edition = "2021"
+description = "An open, minimal, agent-first compositing engine"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+png = "0.17"
+clap = { version = "4", features = ["derive"] }
