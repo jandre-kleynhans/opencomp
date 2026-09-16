@@ -1,6 +1,6 @@
-# OpenComp demo — layered solids
-# Three solid layers at different positions/scales, one semi-transparent,
-# one rotated. The compositing core's proof of life.
+# OpenComp demo — layered solids + keyframes
+# Four layers: backdrop, left card, keyframed right card (slides + rotates),
+# center strip with a rotation expression and an opacity pulse.
 
 [project]
 name     = "demo"
@@ -38,6 +38,28 @@ size = [160.0, 220.0]
 position = [460.0, 240.0]
 rotation = 15.0
 
+[[layer.keyframe]]
+property = "position"
+time = 0
+value = [460.0, 140.0]
+easing = "ease_in_out"
+
+[[layer.keyframe]]
+property = "position"
+time = 120
+value = [460.0, 340.0]
+
+[[layer.keyframe]]
+property = "rotation"
+time = 0
+value = 15.0
+
+[[layer.keyframe]]
+property = "rotation"
+time = 120
+value = -15.0
+easing = "ease_in_out"
+
 [[layer]]
 name = "center_strip"
 type = "solid"
@@ -47,3 +69,24 @@ color = "#f4a26180"
 position = [320.0, 240.0]
 scale = [1.0, 0.35]
 opacity = 70.0
+
+[[layer.keyframe]]
+property = "opacity"
+time = 0
+value = 40.0
+
+[[layer.keyframe]]
+property = "opacity"
+time = 60
+value = 90.0
+easing = "ease_in_out"
+
+[[layer.keyframe]]
+property = "opacity"
+time = 120
+value = 40.0
+easing = "ease_out"
+
+[[layer.expression]]
+property = "rotation"
+expr = "frame * 2.0"

@@ -38,27 +38,32 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design, and [docs/
 
 ## Status
 
-**Phase 1 — Compositing core (in progress).** A Rust engine that reads a TOML project and renders frames. No UI, no keyframes, no plugins — just the foundation proven end-to-end.
+**Phase 2 — Keyframe engine + Python expressions (in progress).** A Rust engine that reads a TOML project, animates layers with keyframes + easing, applies Python expressions, and renders PNG frames.
 
 Current capability:
 - TOML project parsing (composition + layers)
 - Solid-color layers with static transforms (position, scale, opacity, rotation)
+- **Per-property keyframes** with easing (linear, ease_in, ease_out, ease_in_out, step)
+- Timecode `"MM:SS:FF"` or frame-int keyframe times
+- **Python expressions** (`value`, `time`, `frame`, `fps`, `width`, `height`, `duration`)
 - Normal alpha blending, bottom-up layer ordering
-- PNG frame output
+- PNG frame output, CLI `--frame N`
 
 ## Quickstart
 
 ```bash
 cargo build --release
-./target/release/opencomp render examples/demo.toml -o out/frame_0000.png
+./target/release/opencomp render examples/demo.toml -f 0 -o out/frame_0000.png
+./target/release/opencomp render examples/demo.toml -f 60 -o out/frame_0060.png
+./target/release/opencomp render examples/demo.toml -f 120 -o out/frame_0120.png
 ```
 
 ## Roadmap
 
 | Phase | What | Status |
 |-------|------|--------|
-| 1 | Rust compositing core: TOML project → PNG frame | 🔨 in progress |
-| 2 | Keyframe engine: interpolation, easing, Python expression evaluator | pending |
+| 1 | Rust compositing core: TOML project → PNG frame | ✅ done |
+| 2 | Keyframe engine: interpolation, easing, Python expression evaluator | 🔨 in progress |
 | 3 | Python SDK + CLI (`opencomp render/preview/frame`) | pending |
 | 4 | WASM plugin runtime: blur, color, particles as sandboxed effects | pending |
 | 5 | Web UI (optional, headless-first) | pending |
