@@ -10,3 +10,4 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 png = "0.17"
 clap = { version = "4", features = ["derive"] }
+wasmtime = "26"
